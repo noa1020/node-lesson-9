@@ -1,42 +1,12 @@
-const { ProductModel } = require('../services/db');
+const mongoose = require('mongoose');
 
-class Product {
-    constructor(id, name, price, categoryId) {
-        this.id = id;
-        this.name = name;
-        this.price = price;
-        this.categoryId = categoryId;
-    }
+const Schema = mongoose.Schema;
 
-    // Add product
-    async save() {
-        if (!this.id || !this.name || !this.price || !this.categoryId) {
-            throw new Error('Missing required fields for saving the product.');
-        }
-        const existingProduct = await ProductModel.findById(parseInt(this.id));
-        if (existingProduct) {
-            throw new Error('Product with this ID already exists.');
-        }
-        const product = new ProductModel({
-            _id: parseInt(this.id),
-            name: this.name,
-            price: parseInt(this.price),
-            categoryId: parseInt(this.categoryId),
-        });
-        await product.save();
-    }
+const productSchema = new Schema({
+  _id: Number,
+  name: { type: String, required: true, maxLength: 100 },
+  price: { type: Number, required: true },
+  categoryId: { type: Number, required: true },
+});
 
-    // Update product
-    async update() {
-        const existingProduct = await ProductModel.findById(this.id);
-        if (existingProduct) {
-            existingProduct.name = this.name;
-            existingProduct.price = parseInt(this.price);
-            existingProduct.categoryId = parseInt(this.categoryId);
-            await existingProduct.save();
-        } else {
-            throw new Error('Product not found for update.');
-        }
-    }
-}
-module.exports = Product;
+module.exports = mongoose.model('Product', productSchema);

@@ -1,35 +1,30 @@
-const express = require('express');
-const usersRouter = express.Router();
-const user = require('../models/users');
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
-const { UserModel } = require('../services/db');
+const userService = require('../services/userService');
 
-// User Registration (Sign Up)
-usersRouter.post('/signup', async (req, res) => {
-    const { name, id, password, userType } = req.body;
-    const newUser = new user(id, name, password, userType);
-    try {
-        await newUser.save();
-        res.status(201).json("User registered successfully");
-    }
-    catch (err) {
-        res.status(500).send(err.message)
-    }
-});
+/**
+ * Controller function for user registration (Sign Up).
+ */
+const signup = async (req, res) => {
+  try {
+    const newUser = await userService.signup(req.body);
+    res.status(201).json(newUser);
+  } catch (err) {
+    res.status(500).send({ error: err.message });
+  }
+};
 
-// User Login
-usersRouter.post('/login', async (req, res) => {
-    const { id, password } = req.body;
-    // Find the user by id
-    const newuser = await UserModel.findById(parseInt(id));
-    if (!newuser || !bcrypt.compareSync(password, newuser.password)) {
-        return res.status(401).json({ message: 'Invalid id or password' });
-    }
-    // Generate JWT token
-    const token = jwt.sign({ id: newuser.id, userType: newuser.userType }, '1234', { expiresIn: '1h' });
-    newuser.token = token
-    res.header("Authorization", token).send({ "token": token });
-});
+/**
+ * Controller function for user login.
+ */
+const login = async (req, res) => {
+  try {
+    const token = await userService.login(req.body);
+    res.status(200).json({ token });
+  } catch (err) {
+    res.status(401).send({ error: err.message });
+  }
+};
 
-module.exports = usersRouter;
+module.exports = {
+  signup,
+  login,
+};

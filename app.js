@@ -2,24 +2,24 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const authenticateUser = require('./middlewares/auth.middleware');
-
-const categoryController = require('./controllers/categoryController');
-const productController = require('./controllers/productController');
-const userController = require('./controllers/userController');
-
+const userRouter = require('./routers/userRouter');
+const categoryRouter = require('./routers/categoryRouter');
+const productRouter = require('./routers/productRouter');
+const connectToDatabase = require('./db');
 const app = express();
+const port = process.env.PORT;
 
-// Middlewares
+// Middleware for parsing JSON and urlencoded data
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
-// Log middleware
+// Middleware for logging each request
 app.use((req, res, next) => {
   console.log(`Call to the system at ${new Date().toLocaleString()} to ${req.url}`);
   next();
 });
 
-// Integrity check for put/post methods
+// Middleware for ensuring PUT/POST requests have a body
 app.use((req, res, next) => {
   if ((req.method === 'PUT' || req.method === 'POST') && Object.keys(req.body).length === 0) {
     res.status(400).json({ error: "Request body is required for PUT and POST requests" });
@@ -28,31 +28,32 @@ app.use((req, res, next) => {
   }
 });
 
-
-// Authentication check middleware
+// Middleware for authentication
 app.use(authenticateUser);
 
 // Routes
-app.use('/user', userController);
-app.use('/products', productController);
-app.use('/categories', categoryController);
+app.use('/user', userRouter);
+app.use('/products', productRouter);
+app.use('/categories', categoryRouter);
 
-// CORS
+// Middleware for enabling CORS
 app.use(cors());
 
-// Error handling middleware
+// Middleware for handling errors
 app.use((err, req, res, next) => {
   console.error(err); // Log the error to the console
   res.status(500).json({ error: "An error occurred on the server. Please try again later." });
 });
 
-// Server start
-app.listen(3000, () => {
-  console.log("Listening on http://localhost:3000");
+// Start the server
+app.listen(port, () => {
+  console.log(`Listening on http://localhost:${port}`)
 });
 
-// 404 Error handling
+// Middleware for handling 404 errors
 app.get("*", (req, res) => {
   res.status(404).send('You have an error: Page not found');
 });
 
+// Connect to database
+connectToDatabase();
